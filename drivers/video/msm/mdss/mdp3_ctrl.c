@@ -1574,6 +1574,7 @@ static int mdp3_ctrl_lut_update(struct msm_fb_data_type *mfd,
 	lut_config.lut_sel = mdp3_session->lut_sel;
 	lut_config.lut_position = 0;
 	lut_config.lut_dirty = true;
+<<<<<<< HEAD
 #ifdef CONFIG_LCD_KCAL
 	if (setup_hw) {
 #endif
@@ -1584,6 +1585,20 @@ static int mdp3_ctrl_lut_update(struct msm_fb_data_type *mfd,
 	} else {
 		lut.color0_lut = cmap->red;
 		lut.color1_lut = cmap->green;
+=======
+
+#ifdef CONFIG_LCD_KCAL
+	if (setup_hw) {
+#endif
+	/* In HW the order is color0 = g, color1 = r and color2 = b*/
+	lut.color0_lut = g;
+	lut.color1_lut = r;
+	lut.color2_lut = b;
+#ifdef CONFIG_LCD_KCAL
+	} else {
+		lut.color0_lut = cmap->green;
+		lut.color1_lut = cmap->red;
+>>>>>>> 62272bd... LCD_KCAL: Color control driver for msm8x10/mdp3
 		lut.color2_lut = cmap->blue;
 	}
 #endif
