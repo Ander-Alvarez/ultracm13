@@ -28,10 +28,12 @@ module_param_named(simple_gpu_activate, simple_gpu_active, int, 0664);
 
 static int laziness;
 
+     int val;
+
 int simple_gpu_algorithm(int level,
 			struct devfreq_msm_adreno_tz_data *priv)
 {
-	int val;
+	
 
 	/* it's currently busy */
 	if (priv->bin.busy_time > ramp_up_threshold) {
