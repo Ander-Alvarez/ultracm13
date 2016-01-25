@@ -1156,7 +1156,7 @@ static char *WDI_getReqMsgString(wpt_uint16 wdiReqMsgId)
  @see
  @return Result of the function call
 */
-static char *WDI_getRespMsgString(wpt_uint16 wdiRespMsgId)
+ WDI_getRespMsgString(wpt_uint16 wdiRespMsgId)
 {
   switch (wdiRespMsgId)
   {
@@ -21982,7 +21982,7 @@ WDI_RXMsgCTSCB
 
  @return Result of the function call
 */
-WPT_INLINE WDI_Status
+WDI_Status
 WDI_CleanCB
 (
   WDI_ControlBlockType*  pWDICtx
@@ -22013,7 +22013,7 @@ WDI_CleanCB
  @see
  @return Result of the function call
 */
-WPT_INLINE WDI_Status
+WDI_Status
 WDI_ProcessRequest
 (
   WDI_ControlBlockType*  pWDICtx,
@@ -22472,9 +22472,9 @@ WDI_ResponseTimerCB
          pEventData:      pointer to the event information structure
 
  @see
- @return Result of the function call
-*/
-WPT_INLINE WDI_Status
+ @return Result of the function ca
+
+WDI_Status
 WDI_ProcessResponse
 (
   WDI_ControlBlockType*  pWDICtx,
