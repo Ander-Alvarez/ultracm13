@@ -54,7 +54,7 @@ static void mdp3_bufq_deinit(struct mdp3_buffer_queue *bufq)
 	if (!count)
 		return;
 
-	while (count--) {
+	while (count-- && (bufq->pop_idx >= 0)) {
 		struct mdp3_img_data *data = &bufq->img_data[bufq->pop_idx];
 		bufq->pop_idx = (bufq->pop_idx + 1) % MDP3_MAX_BUF_QUEUE;
 		mdp3_put_img(data, MDP3_CLIENT_DMA_P);
@@ -839,8 +839,6 @@ static int mdp3_ctrl_reset(struct msm_fb_data_type *mfd)
 	if (ctrl_pdata && ctrl_pdata->cont_splash_on)
 		ctrl_pdata->cont_splash_on(panel);
 
-	panel->panel_info.cont_splash_esd_rdy = true;
-
 reset_error:
 	mutex_unlock(&mdp3_session->offlock);
 	mutex_unlock(&mdp3_session->lock);
@@ -977,12 +975,13 @@ static int mdp3_ctrl_display_commit_kickoff(struct msm_fb_data_type *mfd,
 {
 	struct mdp3_session_data *mdp3_session;
 	struct mdp3_img_data *data;
-	struct mdss_panel_info *panel_info = mfd->panel_info;
+	struct mdss_panel_info *panel_info;
 	int rc = 0;
 
 	if (!mfd || !mfd->mdp.private1)
 		return -EINVAL;
 
+	panel_info = mfd->panel_info;
 	mdp3_session = mfd->mdp.private1;
 	if (!mdp3_session || !mdp3_session->dma)
 		return -EINVAL;
@@ -1032,7 +1031,8 @@ static int mdp3_ctrl_display_commit_kickoff(struct msm_fb_data_type *mfd,
 	if (mdp3_bufq_count(&mdp3_session->bufq_out) > 1) {
 		mdp3_release_splash_memory(mfd);
 		data = mdp3_bufq_pop(&mdp3_session->bufq_out);
-		mdp3_put_img(data, MDP3_CLIENT_DMA_P);
+		if (data)
+			mdp3_put_img(data, MDP3_CLIENT_DMA_P);
 	}
 
 	if (mdp3_session->first_commit) {
@@ -1059,13 +1059,14 @@ static void mdp3_ctrl_pan_display(struct msm_fb_data_type *mfd,
 	struct mdp3_session_data *mdp3_session;
 	u32 offset;
 	int bpp;
-	struct mdss_panel_info *panel_info = mfd->panel_info;
+	struct mdss_panel_info *panel_info;
 	int rc;
 
 	pr_debug("mdp3_ctrl_pan_display\n");
 	if (!mfd || !mfd->mdp.private1)
 		return;
 
+	panel_info = mfd->panel_info;
 	mdp3_session = (struct mdp3_session_data *)mfd->mdp.private1;
 	if (!mdp3_session || !mdp3_session->dma)
 		return;
@@ -1574,18 +1575,6 @@ static int mdp3_ctrl_lut_update(struct msm_fb_data_type *mfd,
 	lut_config.lut_sel = mdp3_session->lut_sel;
 	lut_config.lut_position = 0;
 	lut_config.lut_dirty = true;
-<<<<<<< HEAD
-#ifdef CONFIG_LCD_KCAL
-	if (setup_hw) {
-#endif
-	lut.color0_lut = r;
-	lut.color1_lut = g;
-	lut.color2_lut = b;
-#ifdef CONFIG_LCD_KCAL
-	} else {
-		lut.color0_lut = cmap->red;
-		lut.color1_lut = cmap->green;
-=======
 
 #ifdef CONFIG_LCD_KCAL
 	if (setup_hw) {
@@ -1598,7 +1587,6 @@ static int mdp3_ctrl_lut_update(struct msm_fb_data_type *mfd,
 	} else {
 		lut.color0_lut = cmap->green;
 		lut.color1_lut = cmap->red;
->>>>>>> 62272bd... LCD_KCAL: Color control driver for msm8x10/mdp3
 		lut.color2_lut = cmap->blue;
 	}
 #endif
@@ -1629,7 +1617,6 @@ static int mdp3_overlay_prepare(struct msm_fb_data_type *mfd,
 {
 	struct mdp_overlay_list ovlist;
 	struct mdp3_session_data *mdp3_session = mfd->mdp.private1;
-	struct mdp_overlay *req_list;
 	struct mdp_overlay *req;
 	int rc;
 
@@ -1646,15 +1633,12 @@ static int mdp3_overlay_prepare(struct msm_fb_data_type *mfd,
 		return -EINVAL;
 	}
 
-	if (copy_from_user(&req_list, ovlist.overlay_list, sizeof(struct mdp_overlay*)))
-		return -EFAULT;
-
-	if (copy_from_user(req, req_list, sizeof(*req)))
+	if (copy_from_user(req, ovlist.overlay_list[0], sizeof(*req)))
 		return -EFAULT;
 
 	rc = mdp3_overlay_set(mfd, req);
 	if (!IS_ERR_VALUE(rc)) {
-		if (copy_to_user(req_list, req, sizeof(*req)))
+		if (copy_to_user(ovlist.overlay_list[0], req, sizeof(*req)))
 			return -EFAULT;
 	}
 
